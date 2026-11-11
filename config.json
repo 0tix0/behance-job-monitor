@@ -1,0 +1,22 @@
+{
+  "search_urls": [
+    "https://www.behance.net/joblist"
+  ],
+  "job_types": ["freelance"],
+  "include_keywords": [
+    "shopify",
+    "website",
+    "web design",
+    "landing page",
+    "ecommerce",
+    "e-commerce",
+    "online store",
+    "logo",
+    "branding",
+    "brand identity",
+    "visual identity"
+  ],
+  "exclude_keywords": [],
+  "max_alerts_per_run": 15,
+  "scroll_rounds": 4
+}
