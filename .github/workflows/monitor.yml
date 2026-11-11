@@ -1,0 +1,58 @@
+name: Behance Job Monitor
+
+on:
+  schedule:
+    - cron: "3,18,33,48 * * * *"   # every 15 minutes
+  workflow_dispatch:                # lets you press "Run workflow" by hand
+
+permissions:
+  contents: write                   # needed to save seen.json
+
+concurrency:
+  group: behance-job-monitor
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install Python packages
+        run: pip install -r requirements.txt
+
+      - name: Make sure a browser is available
+        run: google-chrome --version || python -m playwright install --with-deps chromium
+
+      - name: Check Behance for new jobs
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: python monitor.py
+
+      - name: Save the list of seen jobs
+        if: always()
+        run: |
+          git config user.name "behance-job-monitor"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add seen.json 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "Nothing new to save."
+            exit 0
+          fi
+          git commit -m "Update seen jobs"
+          git push || (git pull --rebase && git push)
+
+      - name: Keep debug files when a run fails
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: debug-${{ github.run_id }}
+          path: debug/
+          if-no-files-found: ignore
+          retention-days: 5
